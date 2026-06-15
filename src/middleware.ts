@@ -15,33 +15,36 @@ export async function middleware(req: NextRequest) {
     {
       cookies: {
         getAll() { return req.cookies.getAll() },
-        setAll(list: Array<{ name: string; value: string; options?: Record<string, unknown> }>) { list.forEach(({ name, value, options }) => res.cookies.set(name, value, options as Parameters<typeof res.cookies.set>[2])) },
+        setAll(list: Array<{ name: string; value: string; options?: Record<string, unknown> }>) {
+          list.forEach(({ name, value, options }) => res.cookies.set(name, value, options as Parameters<typeof res.cookies.set>[2]))
+        },
       },
     }
   )
 
   const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    return NextResponse.redirect(new URL('/login', req.url))
-  }
+  if (!user) return NextResponse.redirect(new URL('/login', req.url))
 
   const { data: profile } = await supabase
-    .from('users')
-    .select('role, active')
-    .eq('id', user.id)
-    .single()
+    .from('users').select('role, active').eq('id', user.id).single()
 
-  if (!profile?.active) {
-    return NextResponse.redirect(new URL('/login?erro=conta_inativa', req.url))
-  }
+  if (!profile?.active) return NextResponse.redirect(new URL('/login?erro=conta_inativa', req.url))
 
-  if (pathname.startsWith('/adm') && profile?.role !== 'adm') {
-    return NextResponse.redirect(new URL('/corretor', req.url))
-  }
-
+  // Redireciona raiz
   if (pathname === '/') {
-    return NextResponse.redirect(new URL(profile?.role === 'adm' ? '/adm' : '/corretor', req.url))
+    return NextResponse.redirect(new URL(profile?.role === 'adm' ? '/crm' : '/corretor', req.url))
+  }
+
+  // Redireciona /adm/* para /crm/*
+  if (pathname.startsWith('/adm')) {
+    const newPath = pathname.replace('/adm', '/crm/leads')
+    if (pathname === '/adm') return NextResponse.redirect(new URL('/crm', req.url))
+    return NextResponse.redirect(new URL(pathname.replace('/adm', '/crm'), req.url))
+  }
+
+  // Corretor não pode acessar /crm/corretores, /crm/relatorios
+  if (profile?.role === 'corretor' && (pathname.startsWith('/crm/corretores') || pathname.startsWith('/crm/relatorios') || pathname.startsWith('/crm/empreendimentos'))) {
+    return NextResponse.redirect(new URL('/corretor', req.url))
   }
 
   return res

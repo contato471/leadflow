@@ -107,3 +107,18 @@ export interface ClienteTimeline {
   autor?: User
 }
 
+
+export type UnidadeStatus = 'disponivel' | 'reservado' | 'vendido'
+
+export interface Unidade {
+  id: string
+  empreendimento_id: string
+  nome: string
+  area_m2: number | null
+  valor_total: number
+  status: UnidadeStatus
+  observacao: string | null
+  created_at: string
+  updated_at: string
+  empreendimento?: Empreendimento
+}
