@@ -57,3 +57,53 @@ export interface DashboardStats {
   convertidos_hoje: number
   taxa_conversao: number
 }
+
+export type FunilEtapa =
+  | 'lead_novo' | 'atendimento' | 'visita_agendada' | 'visita_realizada'
+  | 'proposta' | 'venda_feita' | 'sucesso_cliente' | 'follow_up'
+  | 'sem_resposta' | 'desistente'
+
+export const FUNIL_ETAPAS: { value: FunilEtapa; label: string; cor: string }[] = [
+  { value: 'lead_novo',        label: 'Lead novo',        cor: '#888780' },
+  { value: 'atendimento',      label: 'Atendimento',      cor: '#378ADD' },
+  { value: 'visita_agendada',  label: 'Visita agendada',  cor: '#7F77DD' },
+  { value: 'visita_realizada', label: 'Visita realizada', cor: '#5DCAA5' },
+  { value: 'proposta',         label: 'Proposta',         cor: '#EF9F27' },
+  { value: 'venda_feita',      label: 'Venda feita',      cor: '#639922' },
+  { value: 'sucesso_cliente',  label: 'Sucesso cliente',  cor: '#1D9E75' },
+  { value: 'follow_up',        label: 'Follow-up',        cor: '#BA7517' },
+  { value: 'sem_resposta',     label: 'Sem resposta',     cor: '#888780' },
+  { value: 'desistente',       label: 'Desistente',       cor: '#E24B4A' },
+]
+
+export interface Cliente {
+  id: string
+  id_amigavel: number
+  nome: string
+  telefone: string
+  email: string | null
+  origem: LeadOrigem
+  interesse: string | null
+  empreendimento_id: string | null
+  corretor_id: string | null
+  etapa: FunilEtapa
+  lead_id: string | null
+  observacao: string | null
+  created_at: string
+  updated_at: string
+  empreendimento?: Empreendimento
+  corretor?: User
+}
+
+export interface ClienteTimeline {
+  id: string
+  cliente_id: string
+  autor_id: string | null
+  etapa_de: FunilEtapa | null
+  etapa_para: FunilEtapa | null
+  nota: string | null
+  tipo: string
+  created_at: string
+  autor?: User
+}
+

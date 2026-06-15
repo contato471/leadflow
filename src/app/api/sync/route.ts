@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { syncGoogleSheets, syncTrello, distribuirLeadsPendentes } from '@/lib/sync'
 import { createAdminSupabase } from '@/lib/supabase'
