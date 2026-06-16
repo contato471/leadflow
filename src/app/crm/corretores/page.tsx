@@ -1,6 +1,7 @@
 'use client'
 export const dynamic = 'force-dynamic'
 import { useEffect, useState, useCallback } from 'react'
+import Avatar from '@/components/Avatar'
 import type { Empreendimento } from '@/types'
 
 type Corretor = {
