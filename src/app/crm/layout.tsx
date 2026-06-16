@@ -14,6 +14,7 @@ const NAV = [
   { sec:'Comercial', href:'/crm/empreendimentos', label:'Empreendimentos', icon:'ti-building' },
   { sec:'Comercial', href:'/crm/relatorios', label:'Relatórios', icon:'ti-chart-bar' },
   { sec:'Estoque', href:'/crm/estoque', label:'Unidades', icon:'ti-map-2' },
+  { sec:'Comercial', href:'/crm/propostas', label:'Propostas', icon:'ti-file-text' },
   { sec:'Sistema', href:'/crm/configuracoes', label:'Configurações', icon:'ti-settings' },
   { sec:'Sistema', href:'/perfil', label:'Perfil', icon:'ti-user' },
 ]

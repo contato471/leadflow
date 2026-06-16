@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic'
 
 import { useEffect, useState, useCallback } from 'react'
 import { createBrowserSupabase } from '@/lib/supabase'
-import type { Lead, LeadStatus, DashboardStats, Empreendimento } from '@/types'
+import type { Lead, LeadStatus, Empreendimento } from '@/types'
 
 const STATUS_LABEL: Record<LeadStatus, string> = {
   novo: 'Novo', em_atendimento: 'Em atendimento', convertido: 'Convertido', perdido: 'Perdido',
@@ -20,7 +20,7 @@ function tempoRelativo(iso: string) {
 
 export default function AdmDashboard() {
   const [leads, setLeads] = useState<Lead[]>([])
-  const [stats, setStats] = useState<DashboardStats | null>(null)
+  const [stats, setStats] = useState<Record<string,number> | null>(null)
   const [emps, setEmps] = useState<Empreendimento[]>([])
   const [filtroEmp, setFiltroEmp] = useState('todos')
   const [filtroStatus, setFiltroStatus] = useState('todos')

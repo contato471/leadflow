@@ -9,6 +9,7 @@ const NAV = [
   { sec:'Meus Leads', href:'/corretor', label:'Minha fila', icon:'ti-bolt' },
   { sec:'CRM', href:'/corretor/funil', label:'Funil de vendas', icon:'ti-layout-columns' },
   { sec:'CRM', href:'/corretor/clientes', label:'Meus clientes', icon:'ti-users' },
+  { sec:'CRM', href:'/corretor/propostas', label:'Propostas', icon:'ti-file-text' },
   { sec:'Estoque', href:'/corretor/estoque', label:'Unidades', icon:'ti-map-2' },
   { sec:'Sistema', href:'/perfil', label:'Perfil', icon:'ti-user' },
 ]
