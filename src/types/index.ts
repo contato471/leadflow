@@ -72,3 +72,11 @@ export interface Proposta {
   created_at: string; updated_at: string
   cliente?: Cliente; corretor?: User; unidade?: Unidade
 }
+
+// Reexporta Proposta com campos extras
+export interface PropostaExt extends Proposta {
+  proposta_feita: boolean
+  feita_em: string | null
+  doc_identidade_url: string | null
+  doc_residencia_url: string | null
+}

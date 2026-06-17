@@ -1,0 +1,15 @@
+export const EMPREENDIMENTOS_LISTA = [
+  { sigla:'MV',  nome:'Mangabeira Ville',          cidade:'Conceição da Feira' },
+  { sigla:'CDA', nome:'Cidade dos Artistas',        cidade:'Conceição da Feira' },
+  { sigla:'VV',  nome:'Vila Verde',                 cidade:'Conceição da Feira' },
+  { sigla:'PDC', nome:'Portal das Colinas',         cidade:'Conceição da Feira' },
+  { sigla:'VM1', nome:'Vale do Mirante 1',          cidade:'Conceição da Feira' },
+  { sigla:'BS',  nome:'Bom Sossego',                cidade:'Conceição do Jacuípe' },
+  { sigla:'BI',  nome:'Bom Investimento',           cidade:'Conceição do Jacuípe' },
+  { sigla:'CAC', nome:'Campo Aberto',               cidade:'Campo Formoso' },
+  { sigla:'MVE', nome:'Master Ville',               cidade:'Feira de Santana' },
+  { sigla:'AV',  nome:'Alta Vista',                 cidade:'Feira de Santana' },
+  { sigla:'RR',  nome:'Recanto Real',               cidade:'Feira de Santana' },
+  { sigla:'NN',  nome:'Nova Natureza',              cidade:'Feira de Santana' },
+  { sigla:'BLC', nome:'Bom Viver - Campo Formoso',  cidade:'Campo Formoso' },
+]
