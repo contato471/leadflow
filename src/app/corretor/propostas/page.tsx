@@ -83,13 +83,26 @@ export default function CorretorPropostasPage() {
 
   async function uploadFoto(file: File, tipo: 'id'|'res') {
     if (tipo === 'id') setUploadandoId(true); else setUploadandoRes(true)
-    const reader = new FileReader()
-    reader.onload = async (ev) => {
-      const base64 = ev.target?.result as string
-      if (tipo === 'id') { setDocIdUrl(base64); setUploadandoId(false) }
-      else { setDocResUrl(base64); setUploadandoRes(false) }
-    }
-    reader.readAsDataURL(file)
+    // Comprimir imagem para reduzir tamanho
+    const compress = (f: File): Promise<string> => new Promise((resolve) => {
+      const img = new Image()
+      const url = URL.createObjectURL(f)
+      img.onload = () => {
+        const canvas = document.createElement('canvas')
+        const MAX = 900
+        let w = img.width, h = img.height
+        if (w > MAX) { h = Math.round(h * MAX / w); w = MAX }
+        canvas.width = w; canvas.height = h
+        const ctx = canvas.getContext('2d')!
+        ctx.drawImage(img, 0, 0, w, h)
+        URL.revokeObjectURL(url)
+        resolve(canvas.toDataURL('image/jpeg', 0.75))
+      }
+      img.src = url
+    })
+    const compressed = await compress(file)
+    if (tipo === 'id') { setDocIdUrl(compressed); setUploadandoId(false) }
+    else { setDocResUrl(compressed); setUploadandoRes(false) }
   }
 
   function abrirNova(c?: Cliente) {
