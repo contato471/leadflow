@@ -487,7 +487,7 @@ export default function CorretorPropostasPage() {
                             </div>
                         }
                       </div>
-                      <input ref={ref} type="file" accept="image/*" capture="environment" onChange={e=>{const f=e.target.files?.[0];if(f)uploadFoto(f,tipo as 'id'|'res')}} style={{display:'none'}}/>
+                      <input ref={ref} type="file" accept="image/*" onChange={e=>{const f=e.target.files?.[0];if(f)uploadFoto(f,tipo as 'id'|'res')}} style={{display:'none'}}/>
                       {url && <button onClick={()=>setUrl('')} style={{fontSize:'11px',marginTop:'4px',padding:'3px 8px',border:'0.5px solid var(--red-text)',borderRadius:'var(--radius)',cursor:'pointer',background:'transparent',color:'var(--red-text)'}}>Remover</button>}
                     </div>
                   ))}

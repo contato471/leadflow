@@ -165,9 +165,10 @@ export default function AdmPropostasPage() {
                     <div key={l}>
                       <div style={{fontSize:'10px',color:'var(--text-3)',marginBottom:'3px'}}>{l}</div>
                       {url
-                        ? <a href={url as string} target="_blank" rel="noreferrer">
-                            <img src={url as string} alt={l as string} style={{width:'100%',maxHeight:'120px',objectFit:'cover',borderRadius:'var(--radius)',border:'0.5px solid var(--border)'}}/>
-                          </a>
+                        ? <div>
+                            <img src={url as string} alt={l as string} style={{width:'100%',maxHeight:'120px',objectFit:'cover',borderRadius:'var(--radius)',border:'0.5px solid var(--border)',display:'block',marginBottom:'4px'}}/>
+                            <a href={url as string} download={`${(l as string).replace(' ','_')}_${sel.id_amigavel}.jpg`} style={{fontSize:'11px',color:'var(--teal)',textDecoration:'none',display:'block',textAlign:'center',padding:'4px',border:'0.5px solid var(--teal)',borderRadius:'var(--radius)',background:'var(--teal-bg)'}}>⬇ Baixar foto</a>
+                          </div>
                         : <div style={{height:'80px',border:'0.5px dashed var(--border)',borderRadius:'var(--radius)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'11px',color:'var(--text-3)'}}>Não anexado</div>
                       }
                     </div>
