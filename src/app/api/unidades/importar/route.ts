@@ -4,33 +4,63 @@ import { createServerSupabase } from '@/lib/supabase-server'
 import { createAdminSupabase } from '@/lib/supabase'
 import * as XLSX from 'xlsx'
 
-// Mapa de abreviações para slugs dos empreendimentos
+// Mapa completo de siglas/nomes de abas para slugs do banco
 const SIGLA_MAP: Record<string, string> = {
-  'MV': 'MV', 'MANGABEIRA': 'MV', 'MANGABEIRA VILLE': 'MV',
+  // Mangabeira Ville
+  'MV': 'MV', 'MANGABEIRA VILLE': 'MV', 'MANGABEIRA': 'MV',
+  // Cidade dos Artistas
   'CDA': 'CDA', 'CIDADE DOS ARTISTAS': 'CDA',
+  // Caminho das Árvores de Conceição da Feira (alias CDA)
+  'CAMINHO DAS ARVORES CONCEICAO': 'CDA', 'CAMINHO DAS ARVORES DE CONCEICAO': 'CDA',
+  // Vila Verde
   'VV': 'VV', 'VILA VERDE': 'VV',
+  // Portal das Colinas
   'PDC': 'PDC', 'PORTAL DAS COLINAS': 'PDC',
-  'VM1': 'VM1', 'VALE DO MIRANTE': 'VM1', 'VALE DO MIRANTE 1': 'VM1',
+  // Vale do Mirante
+  'VM1': 'VM1', 'VALE DO MIRANTE 1': 'VM1', 'VALE DO MIRANTE': 'VM1',
+  // Bom Sossego
   'BS': 'BS', 'BOM SOSSEGO': 'BS',
+  // Bom Investimento
   'BI': 'BI', 'BOM INVESTIMENTO': 'BI',
+  // Campo Aberto
   'CAC': 'CAC', 'CAMPO ABERTO': 'CAC',
+  // Master Ville
   'MVE': 'MVE', 'MASTER VILLE': 'MVE',
-  'AV': 'AV', 'ALTA VISTA': 'AV',
+  // Alta Vista — 1ª e 2ª etapa
+  'AV1': 'AV1', 'AV 1ET': 'AV1', 'AV1ET': 'AV1', 'AV 1': 'AV1',
+  'ALTA VISTA 1': 'AV1', 'ALTA VISTA 1ET': 'AV1', 'ALTA VISTA 1 ETAPA': 'AV1',
+  'ALTA VISTA ETAPA 1': 'AV1', 'ALTA VISTA - 1 ETAPA': 'AV1',
+  'AV2': 'AV2', 'AV 2ET': 'AV2', 'AV2ET': 'AV2', 'AV 2': 'AV2',
+  'ALTA VISTA 2': 'AV2', 'ALTA VISTA 2ET': 'AV2', 'ALTA VISTA 2 ETAPA': 'AV2',
+  'ALTA VISTA ETAPA 2': 'AV2', 'ALTA VISTA - 2 ETAPA': 'AV2',
+  // Manter 'AV' sozinho como AV1 por retrocompatibilidade
+  'AV': 'AV1', 'ALTA VISTA': 'AV1',
+  // Recanto Real
   'RR': 'RR', 'RECANTO REAL': 'RR',
+  // Nova Natureza
   'NN': 'NN', 'NOVA NATUREZA': 'NN',
+  // Bom Viver Campo Formoso
   'BLC': 'BLC', 'BOM VIVER': 'BLC', 'BOM VIVER CAMPO FORMOSO': 'BLC',
 }
 
 function normalizarSigla(nome: string): string | null {
+  // Remove acentos e normaliza
   const upper = nome.toUpperCase().trim()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[ªº°]/g, '')
     .replace(/[-–—]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()
-  // Tenta match direto
+
+  // Match direto
   if (SIGLA_MAP[upper]) return SIGLA_MAP[upper]
-  // Tenta match parcial
+
+  // Match com variações parciais
   for (const [key, val] of Object.entries(SIGLA_MAP)) {
-    if (upper.startsWith(key) || upper.includes(key)) return val
+    const keyNorm = key.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    if (upper === keyNorm || upper.startsWith(keyNorm + ' ') || upper.endsWith(' ' + keyNorm)) {
+      return val
+    }
   }
   return null
 }
@@ -61,7 +91,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json()
-    const { base64, modoImportacao } = body // modoImportacao: 'atualizar' | 'substituir'
+    const { base64, modoImportacao } = body
 
     const buffer = Buffer.from(base64, 'base64')
     const workbook = XLSX.read(buffer, { type: 'buffer' })
@@ -72,7 +102,9 @@ export async function POST(req: NextRequest) {
     const empMap: Record<string, string> = {}
     empsDB?.forEach(e => {
       empMap[e.slug.toUpperCase()] = e.id
-      empMap[e.nome.toUpperCase()] = e.id
+      // Normaliza nome também
+      const nomeNorm = e.nome.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      empMap[nomeNorm] = e.id
     })
 
     const resultado = {
@@ -84,54 +116,56 @@ export async function POST(req: NextRequest) {
       empreendimentos: [] as string[],
     }
 
-    // Processar cada aba do Excel
     for (const sheetName of workbook.SheetNames) {
       const sigla = normalizarSigla(sheetName)
       if (!sigla) {
-        resultado.erros.push(`Aba "${sheetName}": empreendimento não reconhecido`)
+        resultado.erros.push(`Aba "${sheetName}": empreendimento não reconhecido (sigla detectada: nenhuma)`)
         continue
       }
 
-      const empId = empMap[sigla] || empMap[Object.keys(empMap).find(k => k.includes(sigla)) ?? '']
+      const empId = empMap[sigla]
       if (!empId) {
-        resultado.erros.push(`Aba "${sheetName}" (${sigla}): empreendimento não encontrado no banco`)
+        resultado.erros.push(`Aba "${sheetName}" → sigla "${sigla}": não encontrado no banco de dados`)
         continue
       }
 
-      resultado.empreendimentos.push(sheetName)
+      resultado.empreendimentos.push(`${sheetName} → ${sigla}`)
       const sheet = workbook.Sheets[sheetName]
       const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' }) as unknown[][]
-
       if (rows.length < 2) continue
 
-      // Detectar cabeçalhos na primeira linha
-      const headers = (rows[0] as string[]).map(h => String(h).toLowerCase().trim())
+      const headers = (rows[0] as string[]).map(h => String(h).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim())
 
-      // Tentar identificar colunas por nome
-      let colNome = headers.findIndex(h => h.includes('lote') || h.includes('unidade') || h.includes('quadra') || h === 'n' || h === 'no')
-      let colArea = headers.findIndex(h => h.includes('area') || h.includes('área') || h.includes('m²') || h.includes('m2') || h.includes('tamanho'))
-      let colValorM2 = headers.findIndex(h => (h.includes('valor') && h.includes('m')) || h.includes('preço/m') || h.includes('preco/m'))
-      let colValorTotal = headers.findIndex(h => (h.includes('valor') && (h.includes('total') || h.includes('lote') || h.includes('venda'))) || (h.includes('total') && !h.includes('m²')))
-      let colStatus = headers.findIndex(h => h.includes('status') || h.includes('situacao') || h.includes('situação') || h.includes('disponib'))
+      let colNome = headers.findIndex(h => h.includes('lote') || h.includes('unidade') || h === 'n' || h === 'no' || h === 'num')
+      let colArea = headers.findIndex(h => h.includes('area') || h.includes('m2') || h.includes('m²') || h.includes('tamanho') || h.includes('medida'))
+      let colValorM2 = headers.findIndex(h => (h.includes('valor') && h.includes('m')) || h.includes('preco/m') || h.includes('vl/m'))
+      let colValorTotal = headers.findIndex(h => (h.includes('valor') && (h.includes('total') || h.includes('lote') || h.includes('venda') || h.includes('terreno'))) || (h.includes('total') && !h.includes('m')))
+      let colStatus = headers.findIndex(h => h.includes('status') || h.includes('situacao') || h.includes('disponib'))
+      let colQuadra = headers.findIndex(h => h.includes('quadra') || h === 'qd')
 
-      // Se não encontrou por nome, usar posições padrão (A=nome, B=área, C=valor/m², D=valor total)
       if (colNome < 0) colNome = 0
       if (colArea < 0) colArea = 1
       if (colValorM2 < 0) colValorM2 = 2
       if (colValorTotal < 0) colValorTotal = 3
 
-      // Se modo substituir, apaga unidades do empreendimento primeiro
       if (modoImportacao === 'substituir') {
         await admin.from('unidades').delete().eq('empreendimento_id', empId)
       }
 
-      // Processar linhas de dados
       for (let i = 1; i < rows.length; i++) {
         const row = rows[i] as unknown[]
         resultado.processadas++
 
-        const nomeLote = String(row[colNome] ?? '').trim()
-        if (!nomeLote || nomeLote === '' || nomeLote.toLowerCase() === 'total' || nomeLote.toLowerCase() === 'subtotal') {
+        const nomeLoteRaw = String(row[colNome] ?? '').trim()
+        const quadra = colQuadra >= 0 ? String(row[colQuadra] ?? '').trim() : ''
+
+        // Monta nome completo incluindo quadra se disponível
+        let nomeLote = nomeLoteRaw
+        if (quadra && !nomeLoteRaw.toLowerCase().includes(quadra.toLowerCase())) {
+          nomeLote = `Qd ${quadra} - ${nomeLoteRaw}`
+        }
+
+        if (!nomeLote || nomeLote === '' || ['total', 'subtotal', 'soma', '-'].includes(nomeLote.toLowerCase())) {
           resultado.ignoradas++
           continue
         }
@@ -139,25 +173,20 @@ export async function POST(req: NextRequest) {
         const area = parseArea(row[colArea])
         const valorTotal = parseMoeda(row[colValorTotal])
         const valorM2 = parseMoeda(row[colValorM2])
-
-        // Calcular valor total se não tiver direto
         const valorFinal = valorTotal ?? (area && valorM2 ? area * valorM2 : null)
 
         if (!valorFinal || valorFinal <= 0) {
           resultado.ignoradas++
-          resultado.erros.push(`Aba "${sheetName}" linha ${i + 1}: "${nomeLote}" sem valor total calculável`)
           continue
         }
 
-        // Detectar status
         let status: 'disponivel' | 'reservado' | 'vendido' = 'disponivel'
         if (colStatus >= 0 && row[colStatus]) {
           const s = String(row[colStatus]).toLowerCase()
           if (s.includes('reserv')) status = 'reservado'
-          else if (s.includes('vend') || s.includes('negoc')) status = 'vendido'
+          else if (s.includes('vend') || s.includes('negoc') || s.includes('vendid')) status = 'vendido'
         }
 
-        // Verificar se já existe (por nome + empreendimento)
         const { data: existente } = await admin.from('unidades')
           .select('id').eq('empreendimento_id', empId).eq('nome', nomeLote).single()
 
