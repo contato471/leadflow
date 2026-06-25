@@ -14,7 +14,8 @@ const NAV = [
   { sec:'Comercial', href:'/crm/empreendimentos',  label:'Empreendimentos',icon:'ti-building',        mobileLabel:'Empreend.' },
   { sec:'Comercial', href:'/crm/relatorios',       label:'Relatórios',    icon:'ti-chart-bar',        mobileLabel:'Relatórios' },
   { sec:'Comercial', href:'/crm/propostas',        label:'Propostas',     icon:'ti-file-text',        mobileLabel:'Propostas' },
-  { sec:'Estoque',   href:'/crm/estoque',          label:'Unidades',      icon:'ti-map-2',            mobileLabel:'Estoque' },
+  { sec:'Estoque',   href:'/crm/estoque',          label:'Unidades',        icon:'ti-map-2',          mobileLabel:'Estoque' },
+  { sec:'Estoque',   href:'/crm/estoque/importar',   label:'Importar planilha', icon:'ti-file-spreadsheet', mobileLabel:'Importar' },
   { sec:'Sistema',   href:'/crm/configuracoes',    label:'Configurações', icon:'ti-settings',         mobileLabel:'Config.' },
   { sec:'Sistema',   href:'/perfil',               label:'Perfil',        icon:'ti-user',             mobileLabel:'Perfil' },
 ]
