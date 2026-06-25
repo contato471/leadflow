@@ -101,7 +101,7 @@ export default function CorretorLayout({ children }: { children: React.ReactNode
         <Avatar nome={userName} avatarUrl={avatarUrl} size={28} fontSize={10}/>
       </div>
 
-      <main style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden', minWidth:0 }}>
+      <main style={{ flex:1, display:'flex', flexDirection:'column', overflow:'auto', minWidth:0 }}>
         {children}
       </main>
 

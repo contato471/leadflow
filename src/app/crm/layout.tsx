@@ -153,7 +153,7 @@ export default function CrmLayout({ children }: { children: React.ReactNode }) {
         </div>
       )}
 
-      <main style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden', minWidth:0 }}>
+      <main style={{ flex:1, display:'flex', flexDirection:'column', overflow:'auto', minWidth:0 }}>
         {children}
       </main>
 
