@@ -327,10 +327,10 @@ export default function EstoqueAdmPage() {
               )}
               {simValida&&(<div><div style={{fontSize:'12px',fontWeight:500,color:'var(--text)',marginBottom:'6px'}}>💬 Mensagem pronta para WhatsApp</div><textarea readOnly value={gerarMensagem()} style={{width:'100%',fontSize:'11px',minHeight:'140px',resize:'vertical',background:'var(--bg-2)',fontFamily:'monospace',lineHeight:1.6}}/></div>)}
             </div>
-            <div style={{padding:'12px 16px',borderTop:'0.5px solid var(--border)',background:'var(--bg-2)',display:'flex',gap:'8px',flexShrink:0}}>
-              {simValida&&<button onClick={copiar} style={{flex:1,padding:'10px',fontSize:'13px',background:copiado?'#1D9E75':'var(--bg)',color:copiado?'#fff':'var(--text)',border:'0.5px solid var(--border-2)',borderRadius:'var(--radius)',cursor:'pointer',fontWeight:500}}>{copiado?'✓ Copiado!':'📋 Copiar mensagem'}</button>}
-              {!reservado?<button onClick={reservar} style={{flex:1,padding:'10px',fontSize:'13px',background:'#BA7517',color:'#fff',border:'none',borderRadius:'var(--radius)',cursor:'pointer',fontWeight:500}}>🔒 Reservar lote</button>:<div style={{flex:1,padding:'10px',fontSize:'13px',background:'#FAEEDA',color:'#633806',borderRadius:'var(--radius)',fontWeight:500,textAlign:'center'}}>✓ Lote reservado</div>}
-              <button onClick={()=>setModalSim(null)} style={{padding:'10px 16px',fontSize:'13px',border:'0.5px solid var(--border-2)',borderRadius:'var(--radius)',cursor:'pointer',background:'transparent',color:'var(--text-2)'}}>Fechar</button>
+            <div style={{padding:'14px 16px',borderTop:'2px solid var(--border)',background:'var(--bg)',display:'flex',gap:'10px',flexShrink:0,flexWrap:'wrap'}}>
+              {simValida&&<button onClick={copiar} style={{flex:'1 1 120px',padding:'14px',fontSize:'14px',background:copiado?'#1D9E75':'var(--bg-2)',color:copiado?'#fff':'var(--text)',border:'1.5px solid var(--border-2)',borderRadius:'var(--radius)',cursor:'pointer',fontWeight:600}}>{copiado?'✓ Copiado!':'📋 Copiar mensagem'}</button>}
+              {!reservado?<button onClick={reservar} style={{flex:'1 1 120px',padding:'14px',fontSize:'14px',background:'#BA7517',color:'#fff',border:'none',borderRadius:'var(--radius)',cursor:'pointer',fontWeight:600}}>🔒 Reservar lote</button>:<div style={{flex:'1 1 120px',padding:'14px',fontSize:'14px',background:'#FAEEDA',color:'#633806',borderRadius:'var(--radius)',fontWeight:600,textAlign:'center'}}>✓ Lote reservado</div>}
+              <button onClick={()=>setModalSim(null)} style={{padding:'14px 20px',fontSize:'14px',border:'1.5px solid var(--border-2)',borderRadius:'var(--radius)',cursor:'pointer',background:'transparent',color:'var(--text-2)',fontWeight:500}}>✕ Fechar</button>
             </div>
           </div>
         </div>

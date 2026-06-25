@@ -101,7 +101,7 @@ export default function AdmPropostasPage() {
                 <div style={{fontSize:'13px',fontWeight:600,color:'var(--text)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{d.proponente||'—'}</div>
                 <div style={{fontSize:'11px',color:'var(--text-3)'}}>#{sel.id_amigavel} · {new Date(sel.created_at).toLocaleDateString('pt-BR')}</div>
               </div>
-              <button onClick={()=>setSel(null)} style={{background:'none',border:'none',cursor:'pointer',color:'var(--text-3)',fontSize:'16px',padding:'2px',flexShrink:0}}>✕</button>
+              <button onClick={()=>setSel(null)} style={{background:'var(--bg-2)',border:'0.5px solid var(--border)',borderRadius:'50%',cursor:'pointer',color:'var(--text-3)',fontSize:'16px',padding:'4px',flexShrink:0,width:'32px',height:'32px',display:'flex',alignItems:'center',justifyContent:'center'}} title="Fechar">✕</button>
             </div>
 
             <div style={{flex:1,overflowY:'auto',padding:'14px',display:'flex',flexDirection:'column',gap:'12px'}}>
