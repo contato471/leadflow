@@ -14,6 +14,12 @@ function tempoRelativo(iso:string){
   return`há ${Math.floor(h/24)}d`
 }
 
+type ResultadoImport = {
+  importados: number; ignorados: number; duplicados: number
+  erros: string[]
+  leadsImportados: Array<{nome:string;telefone:string;origem:string;aba:string}>
+}
+
 export default function LeadsPage() {
   const [leads,setLeads]=useState<Lead[]>([])
   const [emps,setEmps]=useState<Empreendimento[]>([])
@@ -23,7 +29,8 @@ export default function LeadsPage() {
   const [loading,setLoading]=useState(true)
   const [syncing,setSyncing]=useState(false)
   const [importando,setImportando]=useState(false)
-  const [resultadoImport,setResultadoImport]=useState<{importados:number;ignorados:number;duplicados:number;erros:string[]}|null>(null)
+  const [resultado,setResultado]=useState<ResultadoImport|null>(null)
+  const [mostrarDetalhe,setMostrarDetalhe]=useState(false)
 
   const carregar=useCallback(async()=>{
     const params=new URLSearchParams()
@@ -55,19 +62,28 @@ export default function LeadsPage() {
   }
 
   async function importarSheets(){
-    setImportando(true);setResultadoImport(null)
+    setImportando(true);setResultado(null);setMostrarDetalhe(false)
     const res=await fetch('/api/leads/importar-sheets',{method:'POST'}).then(r=>r.json())
-    setResultadoImport(res)
+    setResultado(res)
     await carregar()
     setImportando(false)
   }
 
-  async function sincronizar(){setSyncing(true);await fetch('/api/sync',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({secret:'leadflow_sync_prime_2024'})});await carregar();setSyncing(false)}
-  async function distribuir(id:string){await fetch(`/api/leads/${id}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({distribuir:true})});await carregar()}
+  async function sincronizar(){
+    setSyncing(true)
+    await fetch('/api/sync',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({secret:'leadflow_sync_prime_2024'})})
+    await carregar()
+    setSyncing(false)
+  }
+
+  async function distribuir(id:string){
+    await fetch(`/api/leads/${id}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({distribuir:true})})
+    await carregar()
+  }
 
   return(
     <div style={{flex:1,overflowY:'auto',padding:'16px',display:'flex',flexDirection:'column',gap:'14px'}}>
-      {/* KPIs - usando flex em vez de grid para evitar colapso */}
+      {/* KPIs */}
       <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
         {[
           {l:'Leads hoje',v:stats.hoje,c:'var(--text)'},
@@ -76,29 +92,29 @@ export default function LeadsPage() {
           {l:'Convertidos hoje',v:stats.convertidos,c:'#1D9E75'},
           {l:'Taxa de conversão',v:`${stats.taxa}%`,c:'var(--text)'},
         ].map(s=>(
-          <div key={s.l} style={{flex:'1 1 140px',minWidth:'120px',background:'var(--bg)',border:'0.5px solid var(--border)',borderRadius:'var(--radius)',padding:'12px 14px'}}>
+          <div key={s.l} style={{flex:'1 1 130px',minWidth:'110px',background:'var(--bg)',border:'0.5px solid var(--border)',borderRadius:'var(--radius)',padding:'12px 14px'}}>
             <div style={{fontSize:'11px',color:'var(--text-2)',marginBottom:'4px'}}>{s.l}</div>
-            <div style={{fontSize:'22px',fontWeight:600,color:s.c}}>{s.v}</div>
+            <div style={{fontSize:'22px',fontWeight:700,color:s.c}}>{s.v}</div>
           </div>
         ))}
       </div>
 
-      {/* Filtros */}
-      <div style={{display:'flex',gap:'8px',flexWrap:'wrap',background:'var(--bg)',border:'0.5px solid var(--border)',borderRadius:'var(--radius-lg)',padding:'12px 14px',alignItems:'center'}}>
-        <input type="text" placeholder="Buscar por nome..." value={busca} onChange={e=>setBusca(e.target.value)} style={{maxWidth:'200px',flex:1}}/>
-        <select value={filtroEmp} onChange={e=>setFiltroEmp(e.target.value)} style={{padding:'8px'}}>
+      {/* Filtros + Botões */}
+      <div style={{display:'flex',gap:'8px',flexWrap:'wrap',background:'var(--bg)',border:'0.5px solid var(--border)',borderRadius:'var(--radius-lg)',padding:'10px 14px',alignItems:'center'}}>
+        <input type="text" placeholder="Buscar por nome..." value={busca} onChange={e=>setBusca(e.target.value)} style={{maxWidth:'180px',flex:1}}/>
+        <select value={filtroEmp} onChange={e=>setFiltroEmp(e.target.value)}>
           <option value="todos">Todos os empreendimentos</option>
           {emps.map(e=><option key={e.id} value={e.id}>{e.slug} — {e.nome}</option>)}
         </select>
-        <select value={filtroStatus} onChange={e=>setFiltroStatus(e.target.value)} style={{padding:'8px'}}>
+        <select value={filtroStatus} onChange={e=>setFiltroStatus(e.target.value)}>
           <option value="todos">Todos os status</option>
           <option value="novo">Novo</option>
           <option value="em_atendimento">Em atendimento</option>
           <option value="convertido">Convertido</option>
           <option value="perdido">Perdido</option>
         </select>
-        <span style={{fontSize:'12px',color:'var(--text-3)'}}>{filtrados.length} leads</span>
-        <button onClick={importarSheets} disabled={importando} style={{padding:'8px 14px',whiteSpace:'nowrap',background:'#1D9E75',color:'#fff',border:'none',borderRadius:'var(--radius)',cursor:'pointer',fontWeight:500}}>
+        <span style={{fontSize:'12px',color:'var(--text-3)',whiteSpace:'nowrap'}}>{filtrados.length} leads</span>
+        <button onClick={importarSheets} disabled={importando} style={{padding:'8px 14px',whiteSpace:'nowrap',background:'var(--teal)',color:'#fff',border:'none',borderRadius:'var(--radius)',cursor:'pointer',fontWeight:500}}>
           {importando?'Importando...':'📋 Importar do Sheets'}
         </button>
         <button onClick={sincronizar} disabled={syncing} style={{padding:'8px 14px',whiteSpace:'nowrap'}}>
@@ -106,17 +122,57 @@ export default function LeadsPage() {
         </button>
       </div>
 
-      {/* Resultado importação */}
-      {resultadoImport&&(
-        <div style={{background:resultadoImport.erros.length?'var(--amber-bg)':'var(--teal-bg)',border:`0.5px solid ${resultadoImport.erros.length?'var(--amber-text)':'var(--teal)'}`,borderRadius:'var(--radius-lg)',padding:'12px 16px',display:'flex',gap:'16px',alignItems:'center',flexWrap:'wrap'}}>
-          <span style={{fontSize:'13px',fontWeight:600,color:resultadoImport.erros.length?'var(--amber-text)':'var(--teal-text)'}}>
-            {resultadoImport.erros.length?'⚠️':'✓'} Importação concluída
-          </span>
-          <span style={{fontSize:'13px',color:'var(--text-2)'}}>✅ {resultadoImport.importados} importados</span>
-          <span style={{fontSize:'13px',color:'var(--text-2)'}}>🔄 {resultadoImport.duplicados} duplicados ignorados</span>
-          <span style={{fontSize:'13px',color:'var(--text-2)'}}>⏭ {resultadoImport.ignorados} com corretor (pulados)</span>
-          {resultadoImport.erros.map((e,i)=><span key={i} style={{fontSize:'12px',color:'var(--amber-text)'}}>{e}</span>)}
-          <button onClick={()=>setResultadoImport(null)} style={{marginLeft:'auto',background:'none',border:'none',cursor:'pointer',fontSize:'16px',color:'var(--text-3)'}}>✕</button>
+      {/* Resultado da importação */}
+      {resultado&&(
+        <div style={{background:resultado.erros.length?'var(--amber-bg)':'var(--teal-bg)',border:`0.5px solid ${resultado.erros.length?'var(--amber-text)':'var(--teal)'}`,borderRadius:'var(--radius-lg)',padding:'12px 16px'}}>
+          <div style={{display:'flex',alignItems:'center',gap:'12px',flexWrap:'wrap'}}>
+            <span style={{fontSize:'14px',fontWeight:600,color:resultado.erros.length?'var(--amber-text)':'var(--teal-text)'}}>
+              {resultado.importados>0?'✅':'ℹ️'} {resultado.importados} leads importados
+            </span>
+            <span style={{fontSize:'13px',color:'var(--text-2)'}}>· {resultado.duplicados} já existiam</span>
+            <span style={{fontSize:'13px',color:'var(--text-2)'}}>· {resultado.ignorados} com corretor (ignorados)</span>
+            {resultado.importados>0&&(
+              <button onClick={()=>setMostrarDetalhe(v=>!v)} style={{fontSize:'12px',padding:'4px 10px',borderRadius:'var(--radius)',cursor:'pointer',background:'transparent',border:'0.5px solid var(--border-2)',marginLeft:'auto'}}>
+                {mostrarDetalhe?'Ocultar lista':'Ver quais foram importados'}
+              </button>
+            )}
+            <button onClick={()=>{setResultado(null);setMostrarDetalhe(false)}} style={{background:'none',border:'none',cursor:'pointer',fontSize:'18px',color:'var(--text-3)',lineHeight:1}}>✕</button>
+          </div>
+
+          {/* Lista detalhada dos importados */}
+          {mostrarDetalhe&&resultado.leadsImportados.length>0&&(
+            <div style={{marginTop:'12px',background:'var(--bg)',borderRadius:'var(--radius)',overflow:'hidden',border:'0.5px solid var(--border)'}}>
+              <div style={{padding:'8px 12px',background:'var(--bg-2)',borderBottom:'0.5px solid var(--border)',fontSize:'12px',fontWeight:500,color:'var(--text-2)'}}>
+                Leads importados nessa sessão:
+              </div>
+              <div style={{maxHeight:'260px',overflowY:'auto'}}>
+                <table style={{width:'100%',borderCollapse:'collapse',fontSize:'12px'}}>
+                  <thead>
+                    <tr style={{borderBottom:'0.5px solid var(--border)',background:'var(--bg-2)'}}>
+                      <th style={{padding:'6px 12px',textAlign:'left',fontWeight:500,color:'var(--text-2)'}}>Nome</th>
+                      <th style={{padding:'6px 12px',textAlign:'left',fontWeight:500,color:'var(--text-2)'}}>Telefone</th>
+                      <th style={{padding:'6px 12px',textAlign:'left',fontWeight:500,color:'var(--text-2)'}}>Origem</th>
+                      <th style={{padding:'6px 12px',textAlign:'left',fontWeight:500,color:'var(--text-2)'}}>Planilha</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {resultado.leadsImportados.map((l,i)=>(
+                      <tr key={i} style={{borderBottom:'0.5px solid var(--border)'}}>
+                        <td style={{padding:'7px 12px',fontWeight:500,color:'var(--text)'}}>{l.nome}</td>
+                        <td style={{padding:'7px 12px',color:'var(--text-2)'}}>({l.telefone.slice(0,2)}) {l.telefone.slice(2,7)}-{l.telefone.slice(7)}</td>
+                        <td style={{padding:'7px 12px',color:'var(--text-2)',textTransform:'capitalize'}}>{l.origem.replace('_',' ')}</td>
+                        <td style={{padding:'7px 12px'}}><span style={{fontSize:'11px',padding:'2px 8px',borderRadius:'20px',background:'var(--blue-bg)',color:'var(--blue-text)',fontWeight:500}}>{l.aba}</span></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {resultado.erros.length>0&&resultado.erros.map((e,i)=>(
+            <div key={i} style={{marginTop:'6px',fontSize:'12px',color:'var(--amber-text)'}}>{e}</div>
+          ))}
         </div>
       )}
 
@@ -152,7 +208,7 @@ export default function LeadsPage() {
                     <td style={{padding:'10px 14px',color:'var(--text-3)',fontSize:'11px',whiteSpace:'nowrap'}}>{tempoRelativo(lead.created_at)}</td>
                     <td style={{padding:'10px 14px'}}>
                       {!(lead as any).corretor_id&&lead.status==='novo'&&(
-                        <button onClick={()=>distribuir(lead.id)} style={{fontSize:'11px',padding:'4px 8px',background:'var(--teal)',color:'#fff',border:'none',borderRadius:'var(--radius)',cursor:'pointer',whiteSpace:'nowrap'}}>
+                        <button onClick={()=>distribuir(lead.id)} style={{fontSize:'11px',padding:'4px 10px',background:'var(--teal)',color:'#fff',border:'none',borderRadius:'var(--radius)',cursor:'pointer',whiteSpace:'nowrap'}}>
                           Distribuir
                         </button>
                       )}

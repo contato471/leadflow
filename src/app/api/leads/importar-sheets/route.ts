@@ -38,9 +38,11 @@ async function lerAba(abaName: string): Promise<string[][]> {
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encoded}?key=${SHEETS_API_KEY}`
   const res = await fetch(url)
   const data = await res.json()
-  if (data.error) throw new Error(`Erro ao ler aba "${abaName}": ${data.error.message}`)
+  if (data.error) throw new Error(`Aba "${abaName}": ${data.error.message}`)
   return data.values ?? []
 }
+
+type LeadImportado = { nome: string; telefone: string; origem: string; aba: string }
 
 export async function POST(req: NextRequest) {
   const supabase = await createServerSupabase()
@@ -50,8 +52,9 @@ export async function POST(req: NextRequest) {
   const admin = createAdminSupabase()
   let importados = 0, ignorados = 0, duplicados = 0
   const erros: string[] = []
+  const leadsImportados: LeadImportado[] = []
 
-  // ── Leads Geral ──────────────────────────────────────────────────
+  // ── Leads Geral ──
   // DATA | NOME | INTERESSE | NÚMERO | ORIGEM | CORRETOR | ÚLTIMA INTERAÇÃO
   try {
     const rows = await lerAba('Leads Geral')
@@ -63,16 +66,17 @@ export async function POST(req: NextRequest) {
       if (!telefone) { ignorados++; continue }
       const { data: existe } = await admin.from('leads').select('id').eq('telefone', telefone).single()
       if (existe) { duplicados++; continue }
+      const nome = limparNome(row[1]) || 'Sem nome'
+      const origem = mapOrigem(row[4])
       await admin.from('leads').insert({
-        nome: limparNome(row[1]) || 'Sem nome',
-        telefone, origem: mapOrigem(row[4]),
-        interesse: (row[2] || null), status: 'novo',
+        nome, telefone, origem, interesse: (row[2] || null), status: 'novo',
       })
+      leadsImportados.push({ nome, telefone, origem, aba: 'Leads Geral' })
       importados++
     }
-  } catch (e: any) { erros.push(`Leads Geral: ${e.message}`) }
+  } catch (e: any) { erros.push(e.message) }
 
-  // ── Leads CBII ───────────────────────────────────────────────────
+  // ── Leads CBII ──
   // DATA | NOME | INTERESSE | NÚMERO | ORIGEM | CORRETOR | ÚLTIMA INTERAÇÃO
   try {
     const rows = await lerAba('Leads CBII')
@@ -85,17 +89,18 @@ export async function POST(req: NextRequest) {
       if (!telefone) { ignorados++; continue }
       const { data: existe } = await admin.from('leads').select('id').eq('telefone', telefone).single()
       if (existe) { duplicados++; continue }
+      const nome = limparNome(row[1]) || 'Sem nome'
+      const origem = mapOrigem(row[4])
       await admin.from('leads').insert({
-        nome: limparNome(row[1]) || 'Sem nome',
-        telefone, origem: mapOrigem(row[4]),
-        interesse: (row[2] || null), status: 'novo',
+        nome, telefone, origem, interesse: (row[2] || null), status: 'novo',
         empreendimento_id: empCB?.id ?? null,
       })
+      leadsImportados.push({ nome, telefone, origem, aba: 'Leads CBII' })
       importados++
     }
-  } catch (e: any) { erros.push(`Leads CBII: ${e.message}`) }
+  } catch (e: any) { erros.push(e.message) }
 
-  // ── Leads Balzani ────────────────────────────────────────────────
+  // ── Leads Balzani ──
   // Data e Hora | Nome | Cli | Loteamento | Telefone | Card ID | Corretor | Envio
   try {
     const rows = await lerAba('Leads Balzani')
@@ -117,15 +122,15 @@ export async function POST(req: NextRequest) {
           empId = emp?.id ?? null
         }
       }
+      const nome = limparNome(row[1]) || 'Sem nome'
       await admin.from('leads').insert({
-        nome: limparNome(row[1]) || 'Sem nome',
-        telefone, origem: 'trello',
-        interesse: loteamento || null, status: 'novo',
-        empreendimento_id: empId,
+        nome, telefone, origem: 'trello',
+        interesse: loteamento || null, status: 'novo', empreendimento_id: empId,
       })
+      leadsImportados.push({ nome, telefone, origem: 'trello', aba: 'Leads Balzani' })
       importados++
     }
-  } catch (e: any) { erros.push(`Leads Balzani: ${e.message}`) }
+  } catch (e: any) { erros.push(e.message) }
 
-  return NextResponse.json({ importados, ignorados, duplicados, erros })
+  return NextResponse.json({ importados, ignorados, duplicados, erros, leadsImportados })
 }
