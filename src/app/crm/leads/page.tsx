@@ -22,6 +22,8 @@ export default function LeadsPage() {
   const [busca,setBusca]=useState('')
   const [loading,setLoading]=useState(true)
   const [syncing,setSyncing]=useState(false)
+  const [importando,setImportando]=useState(false)
+  const [resultadoImport,setResultadoImport]=useState<{importados:number;ignorados:number;duplicados:number;erros:string[]}|null>(null)
 
   const carregar=useCallback(async()=>{
     const params=new URLSearchParams()
@@ -50,6 +52,14 @@ export default function LeadsPage() {
     atendimento:leads.filter(l=>l.status==='em_atendimento').length,
     convertidos:leads.filter(l=>l.status==='convertido'&&new Date((l as any).encerrado_em??'').toDateString()===hoje).length,
     taxa:leads.length>0?((leads.filter(l=>l.status==='convertido').length/leads.length)*100).toFixed(1):'0',
+  }
+
+  async function importarSheets(){
+    setImportando(true);setResultadoImport(null)
+    const res=await fetch('/api/leads/importar-sheets',{method:'POST'}).then(r=>r.json())
+    setResultadoImport(res)
+    await carregar()
+    setImportando(false)
   }
 
   async function sincronizar(){setSyncing(true);await fetch('/api/sync',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({secret:'leadflow_sync_prime_2024'})});await carregar();setSyncing(false)}
@@ -88,10 +98,27 @@ export default function LeadsPage() {
           <option value="perdido">Perdido</option>
         </select>
         <span style={{fontSize:'12px',color:'var(--text-3)'}}>{filtrados.length} leads</span>
+        <button onClick={importarSheets} disabled={importando} style={{padding:'8px 14px',whiteSpace:'nowrap',background:'#1D9E75',color:'#fff',border:'none',borderRadius:'var(--radius)',cursor:'pointer',fontWeight:500}}>
+          {importando?'Importando...':'📋 Importar do Sheets'}
+        </button>
         <button onClick={sincronizar} disabled={syncing} style={{padding:'8px 14px',whiteSpace:'nowrap'}}>
           {syncing?'Sincronizando...':'↻ Sincronizar'}
         </button>
       </div>
+
+      {/* Resultado importação */}
+      {resultadoImport&&(
+        <div style={{background:resultadoImport.erros.length?'var(--amber-bg)':'var(--teal-bg)',border:`0.5px solid ${resultadoImport.erros.length?'var(--amber-text)':'var(--teal)'}`,borderRadius:'var(--radius-lg)',padding:'12px 16px',display:'flex',gap:'16px',alignItems:'center',flexWrap:'wrap'}}>
+          <span style={{fontSize:'13px',fontWeight:600,color:resultadoImport.erros.length?'var(--amber-text)':'var(--teal-text)'}}>
+            {resultadoImport.erros.length?'⚠️':'✓'} Importação concluída
+          </span>
+          <span style={{fontSize:'13px',color:'var(--text-2)'}}>✅ {resultadoImport.importados} importados</span>
+          <span style={{fontSize:'13px',color:'var(--text-2)'}}>🔄 {resultadoImport.duplicados} duplicados ignorados</span>
+          <span style={{fontSize:'13px',color:'var(--text-2)'}}>⏭ {resultadoImport.ignorados} com corretor (pulados)</span>
+          {resultadoImport.erros.map((e,i)=><span key={i} style={{fontSize:'12px',color:'var(--amber-text)'}}>{e}</span>)}
+          <button onClick={()=>setResultadoImport(null)} style={{marginLeft:'auto',background:'none',border:'none',cursor:'pointer',fontSize:'16px',color:'var(--text-3)'}}>✕</button>
+        </div>
+      )}
 
       {/* Tabela */}
       {loading?(
