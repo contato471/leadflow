@@ -51,7 +51,7 @@ export default function CorretorLayout({ children }: { children: React.ReactNode
   }
 
   return (
-    <div style={{ display:'flex', height:'100vh', overflow:'hidden', background:'var(--bg-3)' }}>
+    <div style={{ display:'flex', height:'100dvh', overflow:'hidden', background:'var(--bg-3)' }}>
       {/* Sidebar Desktop */}
       <aside className="sidebar-desktop" style={{ width:col?'48px':'200px', flexShrink:0, background:'var(--bg)', borderRight:'0.5px solid var(--border)', display:'flex', flexDirection:'column', transition:'width .2s', overflow:'hidden' }}>
         <div style={{ padding:'0 10px', borderBottom:'0.5px solid var(--border)', display:'flex', alignItems:'center', gap:'8px', height:'52px', flexShrink:0 }}>

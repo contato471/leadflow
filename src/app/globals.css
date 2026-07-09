@@ -40,13 +40,13 @@
   }
 }
 
-html{-webkit-text-size-adjust:100%;touch-action:manipulation}
+html{-webkit-text-size-adjust:100%;touch-action:manipulation;height:100%;overflow:hidden}
 
 body{
   font-family:system-ui,-apple-system,'Segoe UI',sans-serif;
   background:var(--bg-3);color:var(--text);
   font-size:var(--fs-base);line-height:1.5;
-  overflow-x:hidden;overscroll-behavior-y:contain;
+  height:100%;overflow:hidden;overscroll-behavior-y:contain;
 }
 
 /* Inputs - 16px para evitar zoom no iOS */

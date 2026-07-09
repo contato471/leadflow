@@ -44,6 +44,22 @@ async function lerAba(abaName: string): Promise<string[][]> {
 
 type LeadImportado = { nome: string; telefone: string; origem: string; aba: string }
 
+async function criarClienteLeadNovo(admin: ReturnType<typeof createAdminSupabase>, params: {
+  nome: string; telefone: string; origem: string; interesse: string | null; empreendimento_id: string | null; lead_id: string
+}) {
+  const { data: cliente } = await admin.from('clientes').insert({
+    nome: params.nome, telefone: params.telefone, origem: params.origem,
+    interesse: params.interesse, empreendimento_id: params.empreendimento_id,
+    lead_id: params.lead_id, etapa: 'lead_novo',
+  }).select('id').single()
+  if (cliente) {
+    await admin.from('cliente_timeline').insert({
+      cliente_id: cliente.id, etapa_para: 'lead_novo', tipo: 'criacao',
+      nota: `Lead recebido via ${params.origem}.`,
+    })
+  }
+}
+
 export async function POST(req: NextRequest) {
   const supabase = await createServerSupabase()
   const { data: { user } } = await supabase.auth.getUser()
@@ -68,9 +84,11 @@ export async function POST(req: NextRequest) {
       if (existe) { duplicados++; continue }
       const nome = limparNome(row[1]) || 'Sem nome'
       const origem = mapOrigem(row[4])
-      await admin.from('leads').insert({
-        nome, telefone, origem, interesse: (row[2] || null), status: 'novo',
-      })
+      const interesse = row[2] || null
+      const { data: novoLead } = await admin.from('leads').insert({
+        nome, telefone, origem, interesse, status: 'novo',
+      }).select('id').single()
+      if (novoLead) await criarClienteLeadNovo(admin, { nome, telefone, origem, interesse, empreendimento_id: null, lead_id: novoLead.id })
       leadsImportados.push({ nome, telefone, origem, aba: 'Leads Geral' })
       importados++
     }
@@ -91,10 +109,13 @@ export async function POST(req: NextRequest) {
       if (existe) { duplicados++; continue }
       const nome = limparNome(row[1]) || 'Sem nome'
       const origem = mapOrigem(row[4])
-      await admin.from('leads').insert({
-        nome, telefone, origem, interesse: (row[2] || null), status: 'novo',
-        empreendimento_id: empCB?.id ?? null,
-      })
+      const interesse = row[2] || null
+      const empId = empCB?.id ?? null
+      const { data: novoLead } = await admin.from('leads').insert({
+        nome, telefone, origem, interesse, status: 'novo',
+        empreendimento_id: empId,
+      }).select('id').single()
+      if (novoLead) await criarClienteLeadNovo(admin, { nome, telefone, origem, interesse, empreendimento_id: empId, lead_id: novoLead.id })
       leadsImportados.push({ nome, telefone, origem, aba: 'Leads CBII' })
       importados++
     }
@@ -123,10 +144,12 @@ export async function POST(req: NextRequest) {
         }
       }
       const nome = limparNome(row[1]) || 'Sem nome'
-      await admin.from('leads').insert({
+      const interesse = loteamento || null
+      const { data: novoLead } = await admin.from('leads').insert({
         nome, telefone, origem: 'trello',
-        interesse: loteamento || null, status: 'novo', empreendimento_id: empId,
-      })
+        interesse, status: 'novo', empreendimento_id: empId,
+      }).select('id').single()
+      if (novoLead) await criarClienteLeadNovo(admin, { nome, telefone, origem: 'trello', interesse, empreendimento_id: empId, lead_id: novoLead.id })
       leadsImportados.push({ nome, telefone, origem: 'trello', aba: 'Leads Balzani' })
       importados++
     }
